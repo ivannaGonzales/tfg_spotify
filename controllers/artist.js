@@ -1,4 +1,6 @@
 const Artist = require("../models/artist")
+const Album = require("../models/album")
+const Song = require("../models/song")
 const fs = require("fs");
 const path = require("path");
 //guardar un artista en la base de datos
@@ -112,10 +114,19 @@ const eliminar = async (req, res) => {
     try {
         const artistRemoved = await Artist.findByIdAndDelete(artistId)
 
+        const albumRemoved = await Album.find({ artist: artistId }).remove();
+
+        // y si hay muchos albumes? porque solo cojo uno
+        albumRemoved.array.forEach(async (album) => {
+            const songsRemoved = await Song.find({ album: album._id }).remove();
+
+            album.remove();
+
+        });
         return res.status(200).send({
             status: "success",
             message: "Metodo borrado de artista",
-            artistRemoved
+            artistRemoved,
         })
     }
     catch (error) {
@@ -125,10 +136,6 @@ const eliminar = async (req, res) => {
             error
         })
     }
-
-    //remove albums
-    //remove songs
-
 }
 
 const upload = (req, res) => {
